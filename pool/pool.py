@@ -260,7 +260,7 @@ class Pool:
         async def run():
             proc = await asyncio.create_subprocess_exec(
                 hook,
-                final_args,
+                *final_args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
             )
