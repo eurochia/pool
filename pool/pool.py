@@ -245,13 +245,17 @@ class Pool:
             logger.debug('Hook %r does not exist', hook)
             return
 
-        final_args = []
-        for i in args:
-            if isinstance(i, Streamable):
-                arg = i.to_json_dict()
+        def dump(item):
+            if isinstance(item, Streamable):
+                return item.to_json_dict()
+            elif isinstance(item, list):
+                return [dump(i) for i in item]
+            elif isinstance(item, dict):
+                return {dump(k): dump(v) for k, v in item.items()}
             else:
-                arg = json.dumps(i)
-            final_args.append(arg)
+                return json.dumps(item)
+
+        final_args = [dump(i) for i in args]
 
         async def run():
             proc = await asyncio.create_subprocess_exec(
