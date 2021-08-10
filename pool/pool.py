@@ -1,6 +1,9 @@
 import asyncio
+import json
 import logging
+import os
 import pathlib
+import subprocess
 import time
 import traceback
 from asyncio import Task
@@ -29,6 +32,7 @@ from chia.consensus.constants import ConsensusConstants
 from chia.util.ints import uint8, uint16, uint32, uint64
 from chia.util.byte_types import hexstr_to_bytes
 from chia.util.default_root import DEFAULT_ROOT_PATH
+from chia.util.streamable import Streamable
 from chia.rpc.full_node_rpc_client import FullNodeRpcClient
 from chia.full_node.signage_point import SignagePoint
 from chia.types.end_of_slot_bundle import EndOfSubSlotBundle
@@ -50,6 +54,8 @@ from .store.abstract import AbstractPoolStore
 from .store.pgsql_store import PgsqlPoolStore
 from .record import FarmerRecord
 from .util import error_dict, RequestMetadata
+
+logger = logging.getLogger('pool')
 
 
 class Pool:
@@ -229,6 +235,42 @@ class Pool:
         await self.node_rpc_client.await_closed()
         await self.store.close()
 
+    async def run_hook(self, name, *args):
+        hook = self.pool_config.get('hooks', {}).get(name)
+        if not hook:
+            logger.debug('Hook %r not configured', name)
+            return
+
+        if not os.path.exists(hook):
+            logger.debug('Hook %r does not exist', hook)
+            return
+
+        final_args = []
+        for i in args:
+            if isinstance(i, Streamable):
+                arg = i.to_json_dict()
+            else:
+                arg = json.dumps(i)
+            final_args.append(arg)
+
+        async def run():
+            proc = await asyncio.create_subprocess_exec(
+                hook,
+                final_args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+            )
+            try:
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), 30)
+            except asyncio.TimeoutError:
+                await proc.kill()
+                logger.warning('Hook %r killed after 30 seconds', hook)
+                stdout, stderr = await proc.communicate()
+            if proc.returncode != 0:
+                logger.warning('Hook %r returned %d: %r', hook, proc.returncode, stdout)
+
+        asyncio.ensure_future(run())
+
     async def get_peak_loop(self):
         """
         Periodically contacts the full node to get the latest state of the blockchain
@@ -351,6 +393,8 @@ class Pool:
                                     'Failed to add block %r, farmer %r',
                                     singleton_coin_record, rec, exc_info=True,
                                 )
+
+                            await self.run_hook('absorb', coins_to_absorb, rec)
 
                             self.log.info(f"Submitted transaction successfully: {spend_bundle.name().hex()}")
                         else:
