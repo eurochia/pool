@@ -258,10 +258,13 @@ class Pool:
         final_args = tuple([hook, name.upper()] + [json.dumps(dump(i)) for i in args])
 
         async def run():
+            env = os.environ.copy()
+            env['CONFIG_PATH'] = self.pool_config['__path__']
             proc = await asyncio.create_subprocess_exec(
                 *final_args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
+                env=env,
             )
             try:
                 stdout, stderr = await asyncio.wait_for(proc.communicate(), 30)
