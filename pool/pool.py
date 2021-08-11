@@ -249,9 +249,9 @@ class Pool:
             if isinstance(item, Streamable):
                 return item.to_json_dict()
             elif isinstance(item, list):
-                return [dump(i) for i in item]
+                return json.dumps([dump(i) for i in item])
             elif isinstance(item, dict):
-                return {dump(k): dump(v) for k, v in item.items()}
+                return json.dumps({dump(k): dump(v) for k, v in item.items()})
             else:
                 return json.dumps(item)
 
