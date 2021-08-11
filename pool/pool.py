@@ -255,8 +255,7 @@ class Pool:
             else:
                 return item
 
-        final_args = tuple([hook] + [json.dumps(dump(i)) for i in args])
-        print(final_args)
+        final_args = tuple([hook, name.upper()] + [json.dumps(dump(i)) for i in args])
 
         async def run():
             proc = await asyncio.create_subprocess_exec(
