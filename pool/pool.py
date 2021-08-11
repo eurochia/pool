@@ -249,13 +249,13 @@ class Pool:
             if isinstance(item, Streamable):
                 return item.to_json_dict()
             elif isinstance(item, list):
-                return json.dumps([dump(i) for i in item])
+                return [dump(i) for i in item]
             elif isinstance(item, dict):
-                return json.dumps({dump(k): dump(v) for k, v in item.items()})
+                return {dump(k): dump(v) for k, v in item.items()}
             else:
-                return json.dumps(item)
+                return item
 
-        final_args = tuple([hook] + [dump(i) for i in args])
+        final_args = tuple([hook] + [json.dumps(dump(i)) for i in args])
         print(final_args)
 
         async def run():
