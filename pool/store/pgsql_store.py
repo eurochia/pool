@@ -53,6 +53,7 @@ class PgsqlPoolStore(AbstractPoolStore):
             row[8],
             row[9],
             True if row[10] == 1 else False,
+            row[11],
         )
 
     async def add_farmer_record(self, farmer_record: FarmerRecord, metadata: RequestMetadata):
