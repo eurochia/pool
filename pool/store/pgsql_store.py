@@ -104,6 +104,25 @@ class PgsqlPoolStore(AbstractPoolStore):
             return None
         return self._row_to_farmer_record(row[0])
 
+    async def get_farmer_records(self, filters) -> Optional[FarmerRecord]:
+        args = []
+        where = []
+        for k, op, v in filters:
+            if op.lower() not in ('is not null', 'is null', '>', '=', '<', '>=', '<='):
+                continue
+            where.append(f'{k} {op}')
+            if op.lower() not in ('is not null', 'is null'):
+                args.append(v)
+
+        fields = ', '.join((FarmerRecord.__annotations__.keys()))
+        return {
+            i['launcher_id']: self._row_to_farmer_record(i)
+            for i in await self._execute(
+                f"SELECT {fields} FROM farmer WHERE {' AND '.join(where)}",
+                args,
+            )
+        }
+
     async def update_estimated_size_and_pplns(self, launcher_id: str, size: int, points: int, share: Decimal):
         await self._execute(
             "UPDATE farmer SET estimated_size=%s, points_pplns=%s, share_pplns=%s WHERE launcher_id=%s", (size, points, share, launcher_id)
