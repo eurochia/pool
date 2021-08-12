@@ -110,7 +110,7 @@ class PgsqlPoolStore(AbstractPoolStore):
         for k, op, v in filters:
             if op.lower() not in ('is not null', 'is null', '>', '=', '<', '>=', '<='):
                 continue
-            where.append(f'{k} {op}')
+            where.append(f'{k} {op} %s')
             if op.lower() not in ('is not null', 'is null'):
                 args.append(v)
 
