@@ -110,9 +110,11 @@ class PgsqlPoolStore(AbstractPoolStore):
         for k, op, v in filters:
             if op.lower() not in ('is not null', 'is null', '>', '=', '<', '>=', '<='):
                 continue
-            where.append(f'{k} {op} %s')
             if op.lower() not in ('is not null', 'is null'):
+                where.append(f'{k} {op} %s')
                 args.append(v)
+            else:
+                where.append(f'{k} {op}')
 
         fields = ', '.join((FarmerRecord.__annotations__.keys()))
         return {
