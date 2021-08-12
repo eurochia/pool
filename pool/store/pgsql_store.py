@@ -119,7 +119,7 @@ class PgsqlPoolStore(AbstractPoolStore):
 
         fields = ', '.join((FarmerRecord.__annotations__.keys()))
         return {
-            i['launcher_id']: self._row_to_farmer_record(i)
+            i[0]: self._row_to_farmer_record(i)
             for i in await self._execute(
                 f"SELECT {fields} FROM farmer WHERE {' AND '.join(where)}",
                 args,
