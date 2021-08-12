@@ -167,10 +167,10 @@ class Partials(object):
                         ('notify_missing_partials_hours', 'IS NOT NULL', None),
                         ('notify_missing_partials_hours', '>', 0),
                     ])
-                    farmer_records = list(
-                        filter(lambda x: x.launcher_id.hex() in new, farmer_records)
+                    farmer_records = dict(
+                        filter(lambda x: x[0] in new, farmer_records.items())
                     )
-                    await self.pool.run_hook('MISSING_PARTIALS', farmer_records)
+                    await self.pool.run_hook('missing_partials', farmer_records)
                 else:
                     logger.debug('No launchers stopped sending partials.')
             except asyncio.CancelledError:
