@@ -153,10 +153,10 @@ class Partials(object):
                 new = []
                 one_hour_ago = time.time() - 3600
                 for launcher_id, pi in self.cache.items():
-                    if pi.partials and pi.partials[-1] < one_hour_ago:
+                    if pi.partials and pi.partials[-1][0] < one_hour_ago:
                         if launcher_id not in seen:
                             new.append(launcher_id)
-                        seen[launcher_id] = pi.partials[-1]
+                        seen[launcher_id] = pi.partials[-1][0]
                     else:
                         seen.pop(launcher_id, None)
 
